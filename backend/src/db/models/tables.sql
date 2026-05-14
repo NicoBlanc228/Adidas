@@ -4,10 +4,11 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 2. Tabla de Usuarios (Módulo Auth/Users)
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
+    username VARCHAR(50) UNIQUE,
     email VARCHAR(100) UNIQUE NOT NULL,
-    hashed_password TEXT NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
+    password_hash TEXT NOT NULL,
+    age INTEGER NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

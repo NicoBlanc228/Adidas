@@ -21,13 +21,19 @@ class UserRepository:
         return self.db.query(User).filter(User.email == email).first()
 
     def list_all(self) -> list[User]:
-        # TODO: devolver todos los usuarios
-        ...
-
+        return self.db.query(User).all()
+    
     def update(self, user_id: int, **fields) -> User | None:
-        # TODO: actualizar los campos pasados en **fields y devolver el User actualizado
-        ...
+        user = self.db.query(User).filter(User.id == user_id).update(fields, synchronize_session="fetch")
+        self.db.commit()
+        self.db.refresh(user)
+        return user
 
     def delete(self, user_id: int) -> bool:
-        # TODO: borrar el User con ese id; devolver True si lo borró, False si no existía
-        ...
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if user == None:
+            return False
+        self.db.delete(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return True

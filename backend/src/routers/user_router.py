@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from src.db.connection import get_db
 from src.dtos.user_dto import CreateUserDTO, UserResponseDTO
-from src.schemas.user_schema import CreateUserSchema
+from src.schemas.user_schema import CreateUserSchema, UpdateUserSchema
 from src.services.user_service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -18,23 +18,25 @@ def create_user(payload: CreateUserSchema, db: Session = Depends(get_db)):
 
 @router.get("/{user_id}", response_model=UserResponseDTO)
 def get_user(user_id: int, db: Session = Depends(get_db)):
-    # TODO: llamar a UserService(db).get_by_id(user_id) y devolver el resultado
-    ...
+    user = UserService(db).get_by_id(user_id)
+    return user
 
 
 @router.get("/", response_model=list[UserResponseDTO])
 def list_users(db: Session = Depends(get_db)):
-    # TODO: llamar a UserService(db).list_all()
-    ...
+    user_list = UserService(db).list_all()
+    return user_list
 
 
 @router.put("/{user_id}", response_model=UserResponseDTO)
-def update_user(user_id: int, db: Session = Depends(get_db)):
-    # TODO: recibir un UpdateUserSchema, llamar al service, devolver el DTO actualizado
-    ...
+def update_user(payload: UpdateUserSchema, user_id: int, db: Session = Depends(get_db)):
+    dto = CreateUserDTO(UpdateUserSchema(**payload.model_dump()))
+    return UserService(db).update(user_id, dto)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
-    # TODO: llamar a UserService(db).delete(user_id)
-    ...
+    deleted = UserService(db).delete(user_id)
+    if not deleted:
+        return {"detail": "User not found"}, status.HTTP_404_NOT_FOUND
+    return {"detail": "User deleted successfully"}, status.HTTP_204_NO_CONTENT

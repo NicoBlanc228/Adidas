@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from src.utils.errors import NotFoundError
 from src.dtos.user_dto import CreateUserDTO, UserResponseDTO
 from src.mappers.user_mapper import to_user_response
 from src.repositories.user_repository import UserRepository
@@ -21,17 +22,25 @@ class UserService:
         return to_user_response(user)
 
     def get_by_id(self, user_id: int) -> UserResponseDTO:
-        # TODO: buscar el user. Si no existe, lanzar NotFoundError. Devolver UserResponseDTO.
-        ...
+        user = self.repo.find_by_id(user_id)
+        if user == None:
+            raise NotFoundError("User not found")
+        return to_user_response(user)
 
     def list_all(self) -> list[UserResponseDTO]:
-        # TODO: devolver lista de UserResponseDTO
-        ...
+        user_list = self.repo.list_all()
+        return [to_user_response(u) for u in user_list]
 
     def update(self, user_id: int, dto) -> UserResponseDTO:
-        # TODO: validar existencia, aplicar cambios desde dto, devolver el DTO actualizado.
-        ...
+        user = self.repo.find_by_id(user_id)
+        if user == None:
+            raise NotFoundError("User not found")
+        self.repo.update(user_id, **dto.model_dump(exclude_unset=True))
+        user = self.repo.find_by_id(user_id)
+        return to_user_response(user)
 
     def delete(self, user_id: int) -> None:
-        # TODO: borrar el user. Si no existe, NotFoundError.
-        ...
+        user = self.repo.find_by_id(user_id)
+        if user == None:
+            raise NotFoundError("User not found")
+        return self.repo.delete(user_id)
