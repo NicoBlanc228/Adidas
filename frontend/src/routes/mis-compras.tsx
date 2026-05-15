@@ -1,60 +1,80 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import type { Compra, EstadoCompra } from "@/lib/api";
 
-export const Route = createFileRoute("/mis-compras")({
-  head: () => ({ meta: [{ title: "Mis compras — ADIBOLD" }] }),
-  component: MisCompras,
-});
+export const Route = createFileRoute("/mis-compras")({ component: MisComprasPage });
 
-// ============================================================
-// HU8 — GET /clientes/{id}/compras?estado={estado}
-//       Devuelve compras ordenadas por fecha desc, cada una con sus ítems y total.
-// HU13 — POST /compras/{id}/devoluciones  -> { items: [{compra_item_id, cantidad}] }
-// ============================================================
+const ESTADOS: EstadoCompra[] = ["pendiente_pago", "pagada", "enviada", "entregada", "cancelada"];
 
-const ESTADOS = ["todas", "pendiente_pago", "pagada", "enviada", "entregada", "cancelada"] as const;
+function MisComprasPage() {
+  const [estado, setEstado] = useState<string>("todos");
 
-const compras = [
-  { id: 1042, fecha: "2026-04-28", estado: "entregada", total: 509997, items: 3 },
-  { id: 1031, fecha: "2026-04-15", estado: "enviada",   total: 189999, items: 1 },
-  { id: 1018, fecha: "2026-03-30", estado: "pagada",    total: 249999, items: 1 },
-  { id: 1005, fecha: "2026-03-12", estado: "cancelada", total: 139999, items: 1 },
-];
+  // === HU8: Historial del cliente ===
+  // GET /clientes/{clienteId}/compras?estado={estado}
+  // Compras ordenadas por fecha desc, con items y total. Filtro opcional por estado.
+  //
+  // const { data: compras } = useQuery({
+  //   queryKey: ["mis-compras", clienteId, estado],
+  //   queryFn: () => api<Compra[]>(`/clientes/${clienteId}/compras${estado!=="todos" ? `?estado=${estado}`:""}`),
+  // });
 
-function MisCompras() {
-  const [filtro, setFiltro] = useState<string>("todas");
-  const lista = filtro === "todas" ? compras : compras.filter(c => c.estado === filtro);
+  const compras: Compra[] = [
+    { id: 1024, cliente_id: 1, fecha: "2025-05-10T10:30:00", total: 470, estado: "entregada", cupon_id: 2, items: [] },
+    { id: 1019, cliente_id: 1, fecha: "2025-04-22T14:10:00", total: 250, estado: "enviada", cupon_id: null, items: [] },
+    { id: 1010, cliente_id: 1, fecha: "2025-04-01T09:00:00", total: 110, estado: "cancelada", cupon_id: null, items: [] },
+  ];
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <div className="mx-auto max-w-5xl px-4 py-10">
-        <h1 className="font-display text-5xl mb-6">Mis compras</h1>
-        <div className="mb-6 flex flex-wrap gap-2">
-          {ESTADOS.map(e => (
-            <button key={e} onClick={() => setFiltro(e)} className={`border-2 border-foreground px-3 py-1 text-xs font-bold uppercase transition ${filtro === e ? "bg-background text-foreground border-2 border-foreground" : "hover:bg-secondary"}`}>
-              {e.replace("_", " ")}
-            </button>
-          ))}
-        </div>
-        <div className="space-y-3">
-          {lista.map(c => (
-            <Link key={c.id} to="/mis-compras/$id" params={{ id: String(c.id) }} className="flex items-center justify-between border-2 border-foreground bg-background p-5 hover:bg-secondary transition">
-              <div>
-                <div className="font-display text-xl">Orden #{c.id}</div>
-                <div className="text-xs opacity-60">{c.fecha} · {c.items} ítem(s)</div>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="border-2 border-foreground px-2 py-0.5 text-xs font-bold uppercase">{c.estado.replace("_", " ")}</span>
-                <span className="font-display text-lg">${c.total.toLocaleString("es-AR")}</span>
-              </div>
-            </Link>
-          ))}
+    <div className="space-y-6">
+      <div className="flex justify-between items-end gap-4">
+        <h1 className="text-4xl font-black tracking-tighter uppercase">Mis compras</h1>
+        <div className="w-48">
+          <Select value={estado} onValueChange={setEstado}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos</SelectItem>
+              {ESTADOS.map(e => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+            </SelectContent>
+          </Select>
         </div>
       </div>
-      <Footer />
+
+      <Card>
+        <CardHeader><CardTitle>Historial</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>#</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {compras.map(c => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-mono">#{c.id}</TableCell>
+                  <TableCell>{new Date(c.fecha).toLocaleDateString()}</TableCell>
+                  <TableCell className="font-bold">${c.total}</TableCell>
+                  <TableCell><Badge variant="secondary">{c.estado}</Badge></TableCell>
+                  <TableCell>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/compras/$id" params={{ id: String(c.id) }}>Ver</Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

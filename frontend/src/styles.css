@@ -63,29 +63,25 @@
 
 :root {
   --radius: 0rem;
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.08 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.05 0 0);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.08 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.08 0 0);
-  --primary: oklch(0.08 0 0);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0 0);
-  --secondary-foreground: oklch(0.08 0 0);
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.30 0.12 260);
-  --accent-foreground: oklch(0.99 0 0);
-  --destructive: oklch(0.45 0.15 260);
-  --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.08 0 0);
-  --input: oklch(0.85 0 0);
-  --ring: oklch(0.30 0.12 260);
-  --volt: oklch(0.30 0.12 260);
-  --hot: oklch(0.30 0.12 260);
-  --font-display: "Archivo Black", "Arial Black", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.05 0 0);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.96 0 0);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -136,16 +132,7 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-@theme inline {
-  --color-volt: var(--volt);
-  --color-hot: var(--hot);
-  --font-display: var(--font-display);
-  --font-sans: var(--font-body);
-}
-
 @layer base {
-  @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700;900&display=swap");
-
   * {
     border-color: var(--color-border);
   }
@@ -153,29 +140,5 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-body);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  h1, h2, h3, .display {
-    font-family: var(--font-display);
-    letter-spacing: -0.02em;
-    text-transform: uppercase;
-  }
-}
-
-@layer utilities {
-  .stripe-bg {
-    background-image: repeating-linear-gradient(
-      135deg,
-      var(--volt) 0 14px,
-      transparent 14px 28px
-    );
-  }
-  .brutal-shadow {
-    box-shadow: 6px 6px 0 0 var(--foreground);
-  }
-  .brutal-shadow-volt {
-    box-shadow: 6px 6px 0 0 var(--volt);
   }
 }

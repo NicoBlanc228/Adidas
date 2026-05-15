@@ -1,97 +1,155 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { categorias, productos, variantes } from "@/lib/mock";
-import { Package, Star } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import type { Producto, Variante } from "@/lib/api";
 
-export const Route = createFileRoute("/productos/$id")({
-  head: () => ({ meta: [{ title: "Producto — ADIBOLD" }] }),
-  component: Detalle,
-});
+export const Route = createFileRoute("/productos/$id")({ component: ProductoDetalle });
 
-// ============================================================
-// HU2 — GET /productos/{id}/variantes
-// HU12 — GET /productos/{id}             -> incluye promedio + cantidad reseñas
-//        GET /productos/{id}/resenas     -> lista (más recientes primero)
-//        POST /productos/{id}/resenas    -> { puntaje, comentario } (solo si compró+entregada)
-// HU11 — POST /clientes/{id}/carrito/items -> { variante_id, cantidad }
-// ============================================================
+type Resena = { id: number; cliente: string; puntaje: number; comentario: string; fecha: string };
 
-function Detalle() {
+function ProductoDetalle() {
   const { id } = Route.useParams();
-  const p = productos.find(p => p.id === Number(id));
-  const vs = variantes.filter(v => v.producto_id === Number(id));
-  const [sel, setSel] = useState<number | null>(vs[0]?.id ?? null);
+  const [varianteSel, setVarianteSel] = useState<number | null>(null);
+  const [puntaje, setPuntaje] = useState(5);
+  const [comentario, setComentario] = useState("");
 
-  if (!p) return <div className="p-10">Producto no encontrado. <Link to="/productos" className="underline">Volver</Link></div>;
-  const cat = categorias.find(c => c.id === p.categoria_id);
-  const variante = vs.find(v => v.id === sel);
+  // === HU2/HU12: Detalle del producto + reseñas ===
+  // GET /productos/{id} -> incluye promedio y cantidad de reseñas
+  // GET /productos/{id}/variantes
+  // GET /productos/{id}/resenas (más recientes primero)
+  //
+  // const { data: producto } = useQuery({ queryKey:["prod",id], queryFn:() => api<Producto>(`/productos/${id}`) });
+  // const { data: variantes } = useQuery({ queryKey:["var",id], queryFn:() => api<Variante[]>(`/productos/${id}/variantes`) });
+  // const { data: resenas } = useQuery({ queryKey:["res",id], queryFn:() => api<Resena[]>(`/productos/${id}/resenas`) });
+
+  const producto: Producto = { id: Number(id), nombre: "Ultraboost 22", descripcion: "Running premium con tecnología Boost", precio_base: 250, categoria_id: 1, activo: true, promedio_resenas: 4.6, cantidad_resenas: 124 };
+  const variantes: Variante[] = [
+    { id: 11, producto_id: Number(id), talle: "41", color: "negro", stock: 5, sku: "UB22-41-N" },
+    { id: 12, producto_id: Number(id), talle: "42", color: "negro", stock: 0, sku: "UB22-42-N" },
+    { id: 13, producto_id: Number(id), talle: "42", color: "blanco", stock: 8, sku: "UB22-42-B" },
+    { id: 14, producto_id: Number(id), talle: "43", color: "blanco", stock: 2, sku: "UB22-43-B" },
+  ];
+  const resenas: Resena[] = [
+    { id: 1, cliente: "Juan P.", puntaje: 5, comentario: "Excelentes para correr largas distancias.", fecha: "2025-04-12" },
+    { id: 2, cliente: "Ana M.", puntaje: 4, comentario: "Cómodas pero un poco ajustadas.", fecha: "2025-03-30" },
+  ];
+
+  const handleAgregarCarrito = () => {
+    if (!varianteSel) return toast.error("Elegí una variante");
+    // === HU11: Agregar al carrito ===
+    // POST /clientes/{clienteId}/carrito/items
+    // body: { variante_id, cantidad: 1 }
+    // Si la variante ya estaba en el carrito, suma cantidades. Falla si no hay stock.
+    //
+    // await api(`/clientes/${clienteId}/carrito/items`, {
+    //   method: "POST",
+    //   body: JSON.stringify({ variante_id: varianteSel, cantidad: 1 }),
+    // });
+    toast.success("Agregado al carrito");
+  };
+
+  const handleResena = () => {
+    // === HU12: Crear/actualizar reseña ===
+    // POST /productos/{id}/resenas  body: { puntaje, comentario }
+    // Solo permitido si el cliente tiene una compra entregada de ese producto.
+    // Si ya existe reseña del cliente, se actualiza.
+    //
+    // await api(`/productos/${id}/resenas`, {
+    //   method: "POST", body: JSON.stringify({ puntaje, comentario }),
+    // });
+    toast.success("Reseña enviada");
+    setComentario("");
+  };
 
   return (
-    <div className="min-h-screen">
-      <Header />
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 md:grid-cols-2">
-        <div className="border-2 border-foreground bg-secondary aspect-square grid place-items-center brutal-shadow">
-          <Package className="h-40 w-40 opacity-30" />
+    <div className="space-y-8">
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="aspect-square bg-muted flex items-center justify-center text-muted-foreground">
+          Imagen producto
         </div>
-        <div>
-          <div className="text-xs font-bold uppercase opacity-60">{cat?.nombre}</div>
-          <h1 className="mt-2 font-display text-5xl">{p.nombre}</h1>
-          <div className="mt-3 flex items-center gap-2 text-sm">
-            <Star className="h-4 w-4 fill-foreground" /> {p.rating} · {p.resenas_count} reseñas
+        <div className="space-y-4">
+          <div>
+            <h1 className="text-4xl font-black tracking-tighter uppercase">{producto.nombre}</h1>
+            <p className="text-muted-foreground mt-2">{producto.descripcion}</p>
           </div>
-          <p className="mt-4 max-w-prose">{p.descripcion}</p>
-          <div className="mt-6 font-display text-4xl">${p.precio_base.toLocaleString("es-AR")}</div>
+          <div className="flex items-center gap-2">
+            <Badge>★ {producto.promedio_resenas}</Badge>
+            <span className="text-sm text-muted-foreground">({producto.cantidad_resenas} reseñas)</span>
+          </div>
+          <p className="text-3xl font-black">${producto.precio_base}</p>
 
-          <div className="mt-6">
-            <div className="mb-2 text-xs font-bold uppercase">Variante</div>
-            <div className="flex flex-wrap gap-2">
-              {vs.map(v => (
-                <button key={v.id} disabled={v.stock === 0} onClick={() => setSel(v.id)}
-                  className={`border-2 border-foreground px-4 py-2 text-sm font-bold uppercase transition
-                    ${sel === v.id ? "bg-background" : "bg-background hover:bg-secondary"}
-                    ${v.stock === 0 ? "opacity-40 line-through cursor-not-allowed" : ""}`}>
-                  {v.talle} · {v.color} <span className="ml-2 opacity-60">({v.stock})</span>
-                </button>
+          <Separator />
+
+          <div>
+            <Label className="mb-2 block">Variante</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {variantes.map((v) => (
+                <Button
+                  key={v.id}
+                  variant={varianteSel === v.id ? "default" : "outline"}
+                  disabled={v.stock === 0}
+                  onClick={() => setVarianteSel(v.id)}
+                  className="justify-start flex-col h-auto py-3 items-start"
+                >
+                  <span className="font-bold">{v.talle} · {v.color}</span>
+                  <span className="text-xs opacity-70">
+                    {v.stock === 0 ? "Sin stock" : `${v.stock} disponibles`}
+                  </span>
+                </Button>
               ))}
-              {vs.length === 0 && <div className="text-sm opacity-60">Sin variantes cargadas</div>}
             </div>
           </div>
 
-          <div className="mt-8 flex gap-3">
-            <button disabled={!variante || variante.stock === 0}
-              className="flex-1 border-2 border-foreground bg-background px-6 py-4 font-display text-background brutal-shadow hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition disabled:opacity-50">
-              Agregar al carrito
-            </button>
-            <Link to="/carrito" className="border-2 border-foreground px-6 py-4 font-display hover:bg-secondary transition">
-              Ir al carrito
-            </Link>
-          </div>
-          <div className="mt-3 text-xs opacity-60">SKU: {variante?.sku ?? "—"}</div>
+          <Button size="lg" className="w-full" onClick={handleAgregarCarrito}>
+            Agregar al carrito
+          </Button>
         </div>
       </div>
 
-      {/* RESEÑAS */}
-      <div className="mx-auto max-w-7xl px-4 pb-16">
-        <h2 className="font-display text-3xl mb-6">Reseñas</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          {[
-            { autor: "Mariana G.", puntaje: 5, fecha: "2026-04-12", texto: "La comodidad es brutal, las uso todos los días." },
-            { autor: "Lucas P.", puntaje: 4, fecha: "2026-03-30", texto: "Muy buenas, calzan medio justas." },
-          ].map((r, i) => (
-            <div key={i} className="border-2 border-foreground p-5 bg-background">
-              <div className="flex items-center justify-between">
-                <div className="font-bold">{r.autor}</div>
-                <div className="flex">{Array.from({ length: r.puntaje }).map((_, j) => <Star key={j} className="h-4 w-4 fill-volt stroke-foreground" />)}</div>
+      <Separator />
+
+      <section>
+        <h2 className="text-2xl font-black tracking-tighter uppercase mb-4">Reseñas</h2>
+        <Card className="mb-4">
+          <CardHeader><CardTitle className="text-base">Dejá tu reseña</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label>Puntaje (1-5)</Label>
+              <div className="flex gap-1 mt-1">
+                {[1,2,3,4,5].map(n => (
+                  <Button key={n} size="sm" variant={puntaje>=n ? "default" : "outline"} onClick={() => setPuntaje(n)}>★</Button>
+                ))}
               </div>
-              <div className="mt-1 text-xs opacity-60">{r.fecha}</div>
-              <p className="mt-2 text-sm">{r.texto}</p>
             </div>
+            <div>
+              <Label>Comentario</Label>
+              <Textarea value={comentario} onChange={(e)=>setComentario(e.target.value)} />
+            </div>
+            <Button onClick={handleResena}>Enviar reseña</Button>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-3">
+          {resenas.map(r => (
+            <Card key={r.id}>
+              <CardContent className="pt-6">
+                <div className="flex justify-between mb-1">
+                  <span className="font-bold">{r.cliente}</span>
+                  <Badge variant="secondary">★ {r.puntaje}</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">{r.comentario}</p>
+                <p className="text-xs text-muted-foreground mt-2">{r.fecha}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
-      </div>
-      <Footer />
+      </section>
     </div>
   );
 }
