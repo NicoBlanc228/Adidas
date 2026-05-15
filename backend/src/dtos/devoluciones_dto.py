@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel
 
-from src.utils.enums import estado_devolucion
+from src.utils.enums import Estado_devolucion
 
 
 class CreateDevolucionDTO(BaseModel): # POST
@@ -23,7 +23,7 @@ class DevolucionResponseDTO(BaseModel):
     compra_id: int
     comentario: str
     fecha_solicitud: datetime
-    estado: estado_devolucion
+    estado: Estado_devolucion
 
     model_config = {"from_attributes": True}
 
