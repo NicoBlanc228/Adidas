@@ -120,6 +120,7 @@ CREATE TYPE estado_devolucion AS ENUM (
 CREATE TABLE devoluciones (
     id SERIAL PRIMARY KEY,
     compra_id INTEGER REFERENCES compras(id),
+    comentario VARCHAR(500),
     fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     estado estado_devolucion DEFAULT 'solicitada'
 );
