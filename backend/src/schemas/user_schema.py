@@ -3,11 +3,11 @@ from pydantic import BaseModel, EmailStr, Field
 
 class CreateUserSchema(BaseModel):
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str = Field(min_length=8, max_length=128)
     age: int = Field(ge=18)
 
 
 class UpdateUserSchema(BaseModel):
     email: EmailStr | None = None
-    password: str | None = Field(min_length=8)
+    password: str | None = Field(min_length=8, max_length=128)
     age: int | None = Field(ge=18)
