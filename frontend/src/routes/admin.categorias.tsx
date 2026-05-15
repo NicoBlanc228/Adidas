@@ -1,40 +1,70 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { categorias } from "@/lib/mock";
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { toast } from "sonner";
+import type { Categoria } from "@/lib/api";
 
-export const Route = createFileRoute("/admin/categorias")({
-  component: Cats,
-});
+export const Route = createFileRoute("/admin/categorias")({ component: CategoriasAdmin });
 
-// ============================================================
-// HU1 — Categorías
-// GET    /categorias
-// POST   /categorias        -> { nombre (único), descripcion }
-// PATCH  /categorias/{id}
-// DELETE /categorias/{id}
-// ============================================================
-function Cats() {
+function CategoriasAdmin() {
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
+
+  // === HU1: Listar categorías ===
+  // GET /categorias
+  // const { data: categorias } = useQuery({ queryKey:["categorias"], queryFn:() => api<Categoria[]>("/categorias") });
+
+  const categorias: Categoria[] = [
+    { id: 1, nombre: "Running", descripcion: "Calzado y ropa para correr" },
+    { id: 2, nombre: "Lifestyle", descripcion: "Sneakers urbanos" },
+    { id: 3, nombre: "Fútbol", descripcion: "Botines y equipamiento" },
+  ];
+
+  const crear = () => {
+    // === HU1: Crear categoría ===
+    // POST /categorias  body: { nombre, descripcion }
+    // El nombre debe ser único.
+    //
+    // await api("/categorias", { method:"POST", body: JSON.stringify({ nombre, descripcion }) });
+    toast.success(`Categoría "${nombre}" creada`);
+    setNombre(""); setDescripcion("");
+  };
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-4xl">Categorías</h2>
-        <button className="border-2 border-foreground bg-background px-4 py-2 text-background font-bold uppercase text-sm flex items-center gap-2 brutal-shadow"><Plus className="h-4 w-4"/> Nueva</button>
-      </div>
-      <div className="border-2 border-foreground overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-background text-foreground border-2 border-foreground"><tr><th className="text-left p-3">ID</th><th className="text-left p-3">Nombre</th><th className="text-left p-3">Descripción</th><th></th></tr></thead>
-          <tbody>
-            {categorias.map(c => (
-              <tr key={c.id} className="border-t border-input bg-background">
-                <td className="p-3 font-mono">{c.id}</td>
-                <td className="p-3 font-bold">{c.nombre}</td>
-                <td className="p-3">{c.descripcion}</td>
-                <td className="p-3 text-right"><button className="text-xs font-bold uppercase hover:text-volt">Editar</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-4xl font-black tracking-tighter uppercase">Categorías</h1>
+
+      <Card>
+        <CardHeader><CardTitle>Nueva categoría</CardTitle></CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-3">
+          <div><Label>Nombre</Label><Input value={nombre} onChange={(e)=>setNombre(e.target.value)} /></div>
+          <div><Label>Descripción</Label><Textarea value={descripcion} onChange={(e)=>setDescripcion(e.target.value)} /></div>
+          <div className="flex items-end"><Button onClick={crear} className="w-full">Crear</Button></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Categorías existentes</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Nombre</TableHead><TableHead>Descripción</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {categorias.map(c => (
+                <TableRow key={c.id}>
+                  <TableCell>{c.id}</TableCell>
+                  <TableCell className="font-bold">{c.nombre}</TableCell>
+                  <TableCell>{c.descripcion}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

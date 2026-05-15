@@ -1,46 +1,80 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import type { Cupon } from "@/lib/api";
 
-export const Route = createFileRoute("/admin/cupones")({
-  component: Cup,
-});
+export const Route = createFileRoute("/admin/cupones")({ component: CuponesAdmin });
 
-// ============================================================
-// HU4 — Cupones
-// GET    /cupones
-// POST   /cupones    -> { codigo (único), porcentaje (1-100), fecha_vencimiento, usos_maximos }
-// PATCH  /cupones/{id}
-// Validaciones backend: no vencido, usos_actuales < usos_maximos.
-// ============================================================
-const cupones = [
-  { id: 1, codigo: "VOLT15", pct: 15, vence: "2026-06-30", max: 500, usados: 184 },
-  { id: 2, codigo: "RUNNER10", pct: 10, vence: "2026-07-15", max: 1000, usados: 622 },
-  { id: 3, codigo: "EXPIRED", pct: 25, vence: "2025-12-01", max: 100, usados: 100 },
-];
+function CuponesAdmin() {
+  const [form, setForm] = useState({ codigo: "", porcentaje_descuento: "", fecha_vencimiento: "", usos_maximos: "" });
 
-function Cup() {
+  // === HU4: Listar cupones ===
+  // GET /cupones
+  const cupones: Cupon[] = [
+    { id: 1, codigo: "VERANO15", porcentaje_descuento: 15, fecha_vencimiento: "2025-12-31", usos_maximos: 100, usos_actuales: 23 },
+    { id: 2, codigo: "BIENVENIDO", porcentaje_descuento: 10, fecha_vencimiento: "2025-06-01", usos_maximos: 500, usos_actuales: 480 },
+  ];
+
+  const crear = () => {
+    // === HU4: Crear cupón ===
+    // POST /cupones  body: { codigo, porcentaje_descuento, fecha_vencimiento, usos_maximos }
+    // codigo único; porcentaje 1..100.
+    //
+    // await api("/cupones", { method:"POST", body: JSON.stringify({...form, porcentaje_descuento: Number(form.porcentaje_descuento), usos_maximos: Number(form.usos_maximos)}) });
+    toast.success("Cupón creado");
+  };
+
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-display text-4xl">Cupones</h2>
-        <button className="border-2 border-foreground bg-background px-4 py-2 text-background font-bold uppercase text-sm flex items-center gap-2 brutal-shadow"><Plus className="h-4 w-4"/> Nuevo</button>
-      </div>
-      <div className="grid gap-4 md:grid-cols-3">
-        {cupones.map(c => {
-          const vencido = new Date(c.vence) < new Date();
-          const sinUsos = c.usados >= c.max;
-          const inact = vencido || sinUsos;
-          return (
-            <div key={c.id} className={`border-2 border-foreground p-5 ${inact ? "bg-secondary opacity-60" : "bg-background"} brutal-shadow`}>
-              <div className="font-display text-3xl">{c.codigo}</div>
-              <div className="mt-1 text-sm font-bold">-{c.pct}% OFF</div>
-              <div className="mt-3 text-xs">Vence: {c.vence}</div>
-              <div className="text-xs">Usos: {c.usados} / {c.max}</div>
-              <div className="mt-3 text-xs font-bold uppercase">{vencido ? "Vencido" : sinUsos ? "Sin usos" : "Activo"}</div>
-            </div>
-          );
-        })}
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-4xl font-black tracking-tighter uppercase">Cupones</h1>
+
+      <Card>
+        <CardHeader><CardTitle>Nuevo cupón</CardTitle></CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-5">
+          <div><Label>Código</Label><Input value={form.codigo} onChange={(e)=>setForm({...form, codigo:e.target.value})} /></div>
+          <div><Label>% Descuento</Label><Input type="number" value={form.porcentaje_descuento} onChange={(e)=>setForm({...form, porcentaje_descuento:e.target.value})} /></div>
+          <div><Label>Vencimiento</Label><Input type="date" value={form.fecha_vencimiento} onChange={(e)=>setForm({...form, fecha_vencimiento:e.target.value})} /></div>
+          <div><Label>Usos máximos</Label><Input type="number" value={form.usos_maximos} onChange={(e)=>setForm({...form, usos_maximos:e.target.value})} /></div>
+          <div className="flex items-end"><Button onClick={crear} className="w-full">Crear</Button></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Cupones existentes</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader><TableRow>
+              <TableHead>Código</TableHead><TableHead>%</TableHead><TableHead>Vence</TableHead>
+              <TableHead>Usos</TableHead><TableHead>Estado</TableHead>
+            </TableRow></TableHeader>
+            <TableBody>
+              {cupones.map(c => {
+                const vencido = new Date(c.fecha_vencimiento) < new Date();
+                const agotado = c.usos_actuales >= c.usos_maximos;
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell className="font-mono font-bold">{c.codigo}</TableCell>
+                    <TableCell>{c.porcentaje_descuento}%</TableCell>
+                    <TableCell>{c.fecha_vencimiento}</TableCell>
+                    <TableCell>{c.usos_actuales}/{c.usos_maximos}</TableCell>
+                    <TableCell>
+                      {vencido ? <Badge variant="destructive">Vencido</Badge>
+                        : agotado ? <Badge variant="destructive">Agotado</Badge>
+                        : <Badge variant="secondary">Activo</Badge>}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }
